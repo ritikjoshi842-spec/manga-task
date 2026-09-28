@@ -1,0 +1,18 @@
+experiment_name: exp1_zeroshot
+model_id: Qwen/Qwen2.5-VL-7B-Instruct
+data_root: null            # auto-discover
+split: test
+mode: joint                # joint | per_page
+dtype: float16
+quantization: none         # none | 4bit
+device_map: auto
+attn_implementation: sdpa
+min_pixels: 200704         # 256*28*28
+max_pixels: 802816         # 1024*28*28
+max_new_tokens: 2048
+do_sample: false
+repetition_penalty: 1.05
+max_retries: 2
+seed: 42
+prompt_version: v1
+output_dir: outputs/exp1_zeroshot

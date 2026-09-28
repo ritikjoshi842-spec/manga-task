@@ -1,0 +1,9 @@
+# Note: torch is preinstalled on Kaggle - do not pin/reinstall it.
+# Do not require flash-attn.
+transformers>=4.49.0
+accelerate>=0.34.0
+qwen-vl-utils>=0.0.8
+bitsandbytes>=0.43.0
+pillow
+pyyaml
+tqdm
