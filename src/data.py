@@ -35,13 +35,21 @@ def find_dataset_root(config_data_root: str = None) -> str:
     raise FileNotFoundError("Could not auto-discover dataset root. Searched config, env var MANGA_DATA_ROOT, and /kaggle/input/*/")
 
 def find_image_path(root: str, filename: str) -> str:
+    # First, try the direct relative path
+    direct_path = os.path.join(root, filename)
+    if os.path.exists(direct_path):
+        return direct_path
+        
     # Search for the image path recursively if needed
     for dirpath, _, filenames in os.walk(root):
         for f in filenames:
-            if f == filename or f == os.path.basename(filename):
-                return os.path.join(dirpath, f)
+            abs_path = os.path.join(dirpath, f)
+            # Match if the file path ends with the expected relative path
+            if abs_path.replace('\\', '/').endswith(filename.replace('\\', '/')):
+                return abs_path
+                
     # fallback
-    return os.path.join(root, filename)
+    return direct_path
 
 def load_sequences(config, split="test") -> List[Sequence]:
     root = find_dataset_root(config.data_root)

@@ -22,6 +22,7 @@ class Config:
     seed: int
     prompt_version: str
     output_dir: str
+    adapter_path: Optional[str] = None
 
     @classmethod
     def from_yaml(cls, path: str) -> 'Config':

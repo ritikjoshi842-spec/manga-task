@@ -51,6 +51,12 @@ class QwenModel:
             config.model_id,
             **model_kwargs
         )
+        
+        if getattr(config, "adapter_path", None):
+            from peft import PeftModel
+            logger.info(f"Loading LoRA adapter from {config.adapter_path}")
+            self.model = PeftModel.from_pretrained(self.model, config.adapter_path)
+            
         self.model.eval()
         
     def generate(self, messages: List[Dict[str, Any]], max_pixels_override: int = None) -> str:
