@@ -8,7 +8,7 @@ quantization: 4bit         # explicitly 4bit for testing with lora
 device_map: auto
 attn_implementation: sdpa
 min_pixels: 200704         # 256*28*28
-max_pixels: 802816         # 1024*28*28
+max_pixels: 313600         # 400*28*28
 max_new_tokens: 2048
 do_sample: false
 repetition_penalty: 1.05

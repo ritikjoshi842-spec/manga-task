@@ -151,6 +151,7 @@ def train():
     
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
+    model.config.use_cache = False
     
     training_args = TrainingArguments(
         output_dir=config.output_dir,
@@ -161,10 +162,12 @@ def train():
         eval_strategy="epoch",
         save_strategy="epoch",
         logging_steps=5,
-        optim="paged_adamw_32bit",
+        optim="paged_adamw_8bit",
         fp16=True,
         dataloader_pin_memory=False,
-        remove_unused_columns=False
+        remove_unused_columns=False,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False}
     )
     
     from transformers import Trainer
