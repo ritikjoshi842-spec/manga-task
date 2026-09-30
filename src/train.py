@@ -159,7 +159,7 @@ def train():
         gradient_accumulation_steps=4,
         learning_rate=2e-4,
         num_train_epochs=3,
-        eval_strategy="epoch",
+        eval_strategy="no",
         save_strategy="epoch",
         logging_steps=5,
         optim="paged_adamw_8bit",
