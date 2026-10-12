@@ -95,53 +95,77 @@ def main():
             raw_outputs_data["parse_status"] = "failed"
             return None
 
-        try:
-            if config.mode == "joint":
+        if config.mode == "per_page":
+            char_roster = ""
+            for i, img_path in enumerate(seq.image_paths):
+                messages = get_messages_per_page(img_path, i, char_roster)
+                try:
+                    page_res = attempt_generation(messages)
+                    if page_res and len(page_res) > 0 and len(page_res[0]) > 0:
+                        final_pages.append(page_res[0])
+                        char_roster += json.dumps(page_res[0]) + " "
+                    else:
+                        # Empty retry fallback with direct prompt
+                        retry_messages = [
+                            {"role": "user", "content": [
+                                {"type": "text", "text": "Extract all speech bubbles and dialogue on this manga page. Do not return empty if there is readable speech."},
+                                {"type": "image", "image": "file://" + img_path},
+                                {"type": "text", "text": "Return JSON: {\"page\": [{\"speaker\": \"char1\", \"text\": \"...\"}]}"}
+                            ]}
+                        ]
+                        retry_res = attempt_generation(retry_messages)
+                        if retry_res and len(retry_res) > 0 and len(retry_res[0]) > 0:
+                            final_pages.append(retry_res[0])
+                            char_roster += json.dumps(retry_res[0]) + " "
+                        else:
+                            final_pages.append([])
+                except Exception as e_page:
+                    logger.error(f"Error on single page {i} of {seq.sequence_id}: {e_page}")
+                    final_pages.append([])
+                    model.free_memory()
+        else:
+            try:
                 messages = get_messages_joint(seq.image_paths)
                 pages = attempt_generation(messages)
                 if pages:
                     final_pages = pages
-            elif config.mode == "per_page":
-                raise ValueError("Force per_page")
-                
-        except Exception as e:
-            is_oom = False
-            try:
-                import torch
-                if isinstance(e, torch.cuda.OutOfMemoryError) or "CUDA out of memory" in str(e):
-                    is_oom = True
-            except ImportError:
-                pass
-                
-            if is_oom:
-                logger.warning(f"OOM on {seq.sequence_id}, retrying with reduced max_pixels")
-                model.free_memory()
+            except Exception as e:
+                is_oom = False
                 try:
-                    messages = get_messages_joint(seq.image_paths)
-                    pages = attempt_generation(messages, max_pixels_override=int(config.max_pixels * 0.7))
-                    if pages:
-                        final_pages = pages
-                except Exception as e2:
-                    logger.warning(f"OOM again on {seq.sequence_id}, falling back to per_page")
+                    import torch
+                    if isinstance(e, torch.cuda.OutOfMemoryError) or "CUDA out of memory" in str(e):
+                        is_oom = True
+                except ImportError:
+                    pass
+                    
+                if is_oom:
+                    logger.warning(f"OOM on {seq.sequence_id}, retrying with reduced max_pixels")
                     model.free_memory()
-                    config.mode = "per_page"
-                    raw_outputs_data["mode"] = "per_page_fallback"
-            
-            if not final_pages and config.mode == "per_page" or "per_page" in raw_outputs_data["mode"]:
-                char_roster = ""
-                for i, img_path in enumerate(seq.image_paths):
-                    messages = get_messages_per_page(img_path, i, char_roster)
                     try:
-                        page_res = attempt_generation(messages)
-                        if page_res and len(page_res) > 0:
-                            final_pages.append(page_res[0])
-                            char_roster += json.dumps(page_res[0]) + " "
-                        else:
-                            final_pages.append([])
-                    except Exception as e3:
-                        logger.error(f"OOM on single page {i} of {seq.sequence_id}")
-                        final_pages.append([])
+                        messages = get_messages_joint(seq.image_paths)
+                        pages = attempt_generation(messages, max_pixels_override=int(config.max_pixels * 0.7))
+                        if pages:
+                            final_pages = pages
+                    except Exception as e2:
+                        logger.warning(f"OOM again on {seq.sequence_id}, falling back to per_page")
                         model.free_memory()
+                        raw_outputs_data["mode"] = "per_page_fallback"
+                
+                if not final_pages:
+                    char_roster = ""
+                    for i, img_path in enumerate(seq.image_paths):
+                        messages = get_messages_per_page(img_path, i, char_roster)
+                        try:
+                            page_res = attempt_generation(messages)
+                            if page_res and len(page_res) > 0:
+                                final_pages.append(page_res[0])
+                                char_roster += json.dumps(page_res[0]) + " "
+                            else:
+                                final_pages.append([])
+                        except Exception as e3:
+                            logger.error(f"Error on fallback page {i} of {seq.sequence_id}: {e3}")
+                            final_pages.append([])
+                            model.free_memory()
 
         if not final_pages:
             final_pages = [[], [], []]

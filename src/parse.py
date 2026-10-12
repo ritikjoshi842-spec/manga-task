@@ -39,7 +39,14 @@ def normalize_parsed_json(parsed: dict) -> list:
     if isinstance(parsed, list):
         if len(parsed) == 3 and all(isinstance(x, list) for x in parsed):
             return parsed
+        # If it's a direct list of dialogue items for a single page
+        if all(isinstance(x, dict) for x in parsed):
+            return [parsed]
             
+    # {"page": [...]}
+    if "page" in parsed and isinstance(parsed["page"], list):
+        return [parsed["page"]]
+
     # {"page1": [...], "page2": [...], "page3": [...]}
     pages = []
     for key in sorted(parsed.keys()):
