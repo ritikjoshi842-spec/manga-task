@@ -87,7 +87,27 @@ How did I design this model?
 
     The joint F1 score(where the model managed to do all things right) was 38.6%.
 
+#### Note- 
+     The predictions of this part is in submission.jsonl.
+
 #### Reasons for lower scores - 
     1. I had already reduced the max_pixels to 313600 from 802816. This made the image panels unclear for the model.
 
     2. The training data is small and the free GPUs I used were not powerful enough.
+
+### Final Experiment - 
+    Even though I was asked to validate as a set of 3 images(a single panel), I tried to experiment with one single image. This allowed me to experiment with higher pixels and higher resolutions. 
+
+    I got a very good score for single pages in a range of 99 to 100 percent!!!
+
+    However, as a set the score was very poor. Because the model processed each page one-by-one, it had a harder time tracking characters across pages than when it saw all 3 pages together in one forward pass (e.g., in seq_4e5d126a..., it assigned char1, char2, char7, char8, char9, char4—introducing more character IDs).
+
+    So, the total scores were -
+    Matched Token Coverage: 54.0%
+    Text Reading Order: 52.2%
+    Speaker Accuracy: 50.2%
+    Joint F1 Score: 31.1%
+
+#### Note - 
+     Find predictions in submissions2.jsnol.
+
